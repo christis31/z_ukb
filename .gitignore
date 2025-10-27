@@ -47,3 +47,15 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+#ignroe data folder
+data/
+
+#ignore output folder
+output/
+
+#ignore .html folder
+*.html
+
+#ignore .pdf files
+*.pdf
