@@ -4,43 +4,19 @@ if("librarian" %in% installed.packages()==FALSE) install.packages("librarian")
 librarian::shelf(tidyverse)
 
 
-status <- read.table("./data/raw/breast_cancer.txt", header = TRUE)
-cov <- read.table("./data/raw/covariates_breast.txt", header = TRUE)
-remove_qc <- read.table("./data/raw/iid_to_remove_breast.txt", header = FALSE)
-
-remove_qc <- remove_qc %>%
-  rename(eid = V1)
-
-class(status$bc)
-
-#isolate eids which are male 1
-
-male_eid <- cov %>%
-  filter(sex == "1") %>%
-  select(eid)
-
-#combine male eid with ones to remove 
-removal_final <- bind_rows(remove_qc, male_eid)%>%
-  unique()
-
-# all males are also removed at the first iid_to_remove
+status <- read.table("./data/raw/bc.txt", header = TRUE)
+remove_qc <- read.table("./data/raw/fid_to_remove_breast.txt", header = TRUE)
 
 # remove all ids from covariate and from status 
 
-filter_cov <- anti_join(cov, removal_fianl, by = "eid") 
-
-filter_status <- anti_join(status, removal_fianl, by = "eid")
+filter_status <- anti_join(status, remove_qc, by = "FID")
 #197602 final number 
 
 sum(is.na(filter_cov))
 sum(is.na(filter_status))
 
-#no NAs
-
-
 #upload filtered datasets
-write.table(filter_cov, file = "./data/processed/filter_cov_BC.txt", sep = "\t", row.names = FALSE, quote = FALSE)
-write.table(filter_status, file = "./data/processed/filter_status_BC.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+write.table(filter_status, file = "./data/processed/filter_bc.txt", sep = "\t", row.names = FALSE, quote = FALSE)
 
 #upload the R scipt for regenie 
 #i did regenie mannually since it doesnt work and idk why
