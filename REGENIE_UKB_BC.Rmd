@@ -82,9 +82,8 @@ starting with regenie step 1
   --bed ukb_cal_allChrs \
   --extract qc_pass.snplist \
   --keep qc_pass.id \
-  --phenoFile  bc.txt \
+  --phenoFile  filter_bc.txt \
   --covarFile covariates_breast.txt \
-  --remove fid_to_remove_breast.txt \
   --bt \
   --bsize 1000 \
   --lowmem \
