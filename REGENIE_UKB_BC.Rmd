@@ -50,7 +50,13 @@ rm -f list_beds.txt; for chr in {2..22}; do echo "ukb22418_c${chr}_b0_v2.bed ukb
 
 #qc 
 #have to pick a HWE threshold
-#
+#Discussion on HWE threshold on this analysis
+#1e-6 seems to be innapropriate for a large sample like the UKB 
+#find out the sample size and give reasoning on why you used 1e-15 0.01
+#k parameter is recommended by Greer PJ, et al. (2024)
+
+#the snp_failed.. waws conducted based on array batch qc provided by UKB
+#https://biobank.ndph.ox.ac.uk/ukb/refer.cgi?id=1955
 
 plink2 \
   --bfile ukb_cal_allChrs \
@@ -68,10 +74,6 @@ plink2 --bfile ukb_cal_allChrs --exclude snp_failed_arraybatch_qc.txt --maf 0.01
 
 ```
 
-Discussion on HWE threshold on this analysis
-1e-6 seems to be innapropriate for a large sample like the UKB 
-find out the sample size and give reasoning on why you used 1e-15 0.01
-k parameter is recommended by Greer PJ, et al. (2024)
 
 starting with regenie step 1
 ```{r}
