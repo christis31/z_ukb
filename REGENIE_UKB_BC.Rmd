@@ -77,7 +77,7 @@ Need to include LD filtering
 ```{r}
 #LD filtering 
 #make list of snps passing and not passing the LD requirements
-plink2 --bfile qc_pass --indep-pairwise 1000 100 0.9 --out qc_pass_ld --threads 2
+plink2 --bfile qc_pass --indep-pairwise 1000 100 0.9 --out qc_pass_ld
 
 
 #keep the SNPs passing the LD pruning
