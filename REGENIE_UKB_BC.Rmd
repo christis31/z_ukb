@@ -63,16 +63,27 @@ plink2 \
   --exclude snp_failed_arraybatch_qc.txt
   --maf 0.01 --mac 100 --geno 0.01 --hwe 1e-15 0.001 midp \
   --mind 0.1 \
-  --write-snplist --write-samples --no-id-header \
+  --make-bed \
   --out qc_pass
 
 #oneline version for dnanexus
 
-plink2 --bfile ukb_cal_allChrs --exclude snp_failed_arraybatch_qc.txt --maf 0.01 --mac 100 --geno 0.01 --hwe 1e-15 0.001 midp --mind 0.1 --write-snplist --write-samples --no-id-header --out qc_pass
+plink2 --bfile ukb_cal_allChrs --exclude snp_failed_arraybatch_qc.txt --maf 0.01 --mac 100 --geno 0.01 --hwe 1e-15 0.001 midp --mind 0.1 --make-bed --out qc_pass
 ```
 
 The UK Biobank did the filtering itself for qc, so might be doing too much fltering by usin the default UKB qc list plus our own filtering with maf mac geno hwe mind etc etc 
 
+Need to include LD filtering 
+```{r}
+#LD filtering 
+#make list of snps passing and not passing the LD requirements
+plink2 --bfile qc_pass --indep-pairwise 1000 100 0.9 --out qc_pass_ld --threads 2
+
+
+#keep the SNPs passing the LD pruning
+plink2 --bfile qc_pass --extract qc_pass_ld.prune.in --make-bed --out qc_pass_ld
+
+```
 
 Needed to also filter out samples excluded based on sex, kinship, ancestry from UKB provided files 
 ```{r}
