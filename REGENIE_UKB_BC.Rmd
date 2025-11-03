@@ -69,10 +69,10 @@ plink2 \
 #oneline version for dnanexus
 
 plink2 --bfile ukb_cal_allChrs --exclude snp_failed_arraybatch_qc.txt --maf 0.01 --mac 100 --geno 0.01 --hwe 1e-15 0.001 midp --mind 0.1 --write-snplist --write-samples --no-id-header --out qc_pass
-
-
-
 ```
+
+The UK Biobank did the filtering itself for qc, so might be doing too much fltering by usin the default UKB qc list plus our own filtering with maf mac geno hwe mind etc etc 
+
 
 Needed to also filter out samples excluded based on sex, kinship, ancestry from UKB provided files 
 ```{r}
