@@ -81,6 +81,9 @@ plink2 --bfile qc_pass --indep-pairwise 1000 100 0.9 --out qc_pass_ld
 
 #keep the SNPs passing the LD pruning
 plink2 --bfile qc_pass --extract qc_pass_ld.prune.in --make-bed --out qc_pass_ld
+
+## took too long so this is the alternative based on joe's code
+plink2 --memory 8000 --bfile qc_pass --indep-pairwise 1000 100 0.8 --out qc_pass_ld08 --threads 6 && \ plink2 --memory 1000 --bfile qc_pass --extract qc_pass_ld08.prune.in --make-bed --out qc_pass_ld08
 ```
 
 Needed to also filter out samples excluded based on sex, kinship, ancestry from UKB provided files - maybe not then
@@ -109,7 +112,7 @@ starting with regenie step 1
 ```{r}
 ./regenie \
   --step 1 \
-  --bed qc_pass_ld \
+  --bed qc_pass_ld08 \
   --phenoFile bc.txt \
   --remove fid_to_remove_breast.txt \
   --covarFile covariates_breast.txt \
@@ -120,7 +123,7 @@ starting with regenie step 1
   --out ukb_step1_BT
 
 #one line version 
-regenie --step 1 --bed ukb_cal_allChrs --bed qc_pass_ld --phenoFile bc.txt --remove fid_to_remove_breast.txt --covarFile covariates_breast.txt --bt --bsize 1000 --lowmem --lowmem-prefix tmpdir/regenie_tmp_preds --out ukb_step1_BT
+regenie --step 1 --bed ukb_cal_allChrs --bed qc_pass_ld08 --phenoFile bc.txt --remove fid_to_remove_breast.txt --covarFile covariates_breast.txt --bt --bsize 1000 --lowmem --lowmem-prefix tmpdir/regenie_tmp_preds --out ukb_step1_BT
 ```
 
 
