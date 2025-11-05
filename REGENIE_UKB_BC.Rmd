@@ -126,8 +126,30 @@ starting with regenie step 1
   --out ukb_step1_BT
   --loocv 
 
-#one line version 
+#one line version - modify so it corresponds to the above one
 regenie --step 1 --bed ukb_cal_allChrs --bed qc_pass_ld08 --phenoFile bc.txt --remove fid_to_remove_breast.txt --covarFile covariates_breast.txt --bt --bsize 1000 --lowmem --lowmem-prefix tmpdir/regenie_tmp_preds --out ukb_step1_BT
 ```
 
+
+```{r}
+./regenie \
+  --step 2 \
+  --bgen ukb22418_c22_b0_v2.bgen \
+  --ref-first \
+  --sample ukb22418_c22_b0_v2.sample \
+  --phenoFile filter_bc.txt \
+  --phenoColList
+  --covarFile filter_cov_bc.txt \
+  --covarCollist 
+  --pred ukb_step1_BT_pred.list \
+  --bt \
+  --firth --approx --pThresh 0.01 \ # need to insert our own p value threshold 
+  --bsize 400 \
+  --threads 8 \
+  --af-cc	#for output format case/control
+  --out ukb_step2_BT_chr22
+
+##To remove all samples that have missing values at any of the P
+ ##phenotypes, use option --strict
+```
 
