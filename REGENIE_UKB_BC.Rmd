@@ -114,13 +114,17 @@ starting with regenie step 1
   --step 1 \
   --bed qc_pass_ld08 \
   --phenoFile bc.txt \
+  --pheoColList ... # i think we can have more than one phenotype column here?
   --remove fid_to_remove_breast.txt \
   --covarFile covariates_breast.txt \
+  --covarColList ... # specify which covariates to include #age?? #PC1-10 for sure
   --bt \
   --bsize 1000 \
   --lowmem \
   --lowmem-prefix tmpdir/regenie_tmp_preds \
+  --threads 8 \
   --out ukb_step1_BT
+  --loocv 
 
 #one line version 
 regenie --step 1 --bed ukb_cal_allChrs --bed qc_pass_ld08 --phenoFile bc.txt --remove fid_to_remove_breast.txt --covarFile covariates_breast.txt --bt --bsize 1000 --lowmem --lowmem-prefix tmpdir/regenie_tmp_preds --out ukb_step1_BT
