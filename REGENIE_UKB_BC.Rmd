@@ -151,5 +151,7 @@ regenie --step 1 --bed ukb_cal_allChrs --bed qc_pass_ld08 --phenoFile bc.txt --r
 
 ##To remove all samples that have missing values at any of the P
  ##phenotypes, use option --strict
+
+#one line version
 ```
 
