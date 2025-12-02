@@ -70,85 +70,19 @@ Need to include LD filtering
 plink2 --memory 8000 --bfile qc_pass --keep id_for_ld.txt --indep-pairwise 1000 100 0.9 --out qc_pass_ld09 --threads 6
 ```
 
-Needed to also filter out samples excluded based on sex, kinship, ancestry from UKB provided files - maybe not then
+starting with regenie step 1 - breast
 ```{r}
-if("librarian" %in% installed.packages()==FALSE) install.packages("librarian")
-librarian::shelf(tidyverse)
+mkdir -p tmpdir && regenie --step 1 --bed qc_pass --extract qc_pass_ld09_full.prune.in --remove fid_to_remove_breast.txt --phenoFile pheno_breast.txt --phenoColList bbd_pl_pros,bbd_npl_pros,bbd_bn_pros,dcis_pros,lcis_pros,bc --covarFile covariates.txt --covarColList PC1,PC2,PC3,PC4,PC5,PC6,PC7,PC8,PC9,PC10 --bt --bsize 1000 --lowmem --lowmem-prefix tmpdir/regenie_tmp_preds --out ukb_step1_BT --loocv
 
-
-status <- read.table("./data/raw/bc.txt", header = TRUE)
-remove_qc <- read.table("./data/raw/fid_to_remove_breast.txt", header = TRUE)
-
-# remove all ids from covariate and from status 
-
-filter_status <- anti_join(status, remove_qc, by = "FID")
-#197602 final number 
-
-sum(is.na(filter_cov))
-sum(is.na(filter_status))
-
-#upload filtered datasets
-write.table(filter_status, file = "./data/processed/filter_bc.txt", sep = "\t", row.names = FALSE, quote = FALSE)
 ```
 
-
-starting with regenie step 1
+regenie step 1 - lung (smoker)
 ```{r}
-./regenie \
-  --step 1 \
-  --bed qc_pass\
-  --keep #sample QS either breast or lung #is this needed since we are deleting their phenotypic things anyway
-  --keep #LD prune in
-  --phenoFile bc.txt \
-  --phenoColList ... # i think we can have more than one phenotype column here?
-  --remove fid_to_remove_breast.txt \ #sample QS either breast or lung 
-  --covarFile covariates_breast.txt \
-  --covarColList ... # specify which covariates to include #age?? #PC1-10 for sure
-  --bt \
-  --bsize 1000 \
-  --lowmem \
-  --lowmem-prefix tmpdir/regenie_tmp_preds \
-  --threads 8 \
-  --out ukb_step1_BT
-  --loocv 
-
-#one line version - modify so it corresponds to the above one
-regenie --step 1 --bed qc_pass --extract qc_pass_ld09_full.prune.in --remove fid_to_remove_breast.txt --phenoFile pheno_breast.txt --phenoColList bbd_pl_pros,bbd_npl_pros,bbd_bn_pros,dcis_pros,lcis_pros,bc --covarFile covariates.txt --covarColList PC1,PC2,PC3,PC4,PC5,PC6,PC7,PC8,PC9,PC10 --bt --bsize 1000 --lowmem --lowmem-prefix tmpdir/regenie_tmp_preds --out ukb_step1_BT --loocv
-
-#maybe also remove ICLD, low-complexity stuff 
+mkdir -p tmpdir && regenie --step 1 --bed qc_pass --extract qc_pass_ld09_full.prune.in --remove fid_to_remove_lung.txt --phenoFile lung_smoker.txt --phenoColList nodules_pros,lc --covarFile covariates.txt --covarColList PC1,PC2,PC3,PC4,PC5,PC6,PC7,PC8,PC9,PC10 --bt --bsize 1000 --lowmem --lowmem-prefix tmpdir/regenie_tmp_preds --out ukb_step1_BT_lung_smoker --loocv
 ```
 
-
+regenie step 1 - lung (nonsmoker)
 ```{r}
-./regenie \
-  --step 2 \
-  --bgen ukb22418_c22_b0_v2.bgen \
-  --ref-first \
-  --sample ukb22418_c22_b0_v2.sample \
-  --phenoFile filter_bc.txt \
-  --phenoColList
-  --covarFile filter_cov_bc.txt \
-  --covarCollist 
-  --pred ukb_step1_BT_pred.list \
-  --bt \
-  --firth --approx --pThresh 0.01 \ # need to insert our own p value threshold 
-  --bsize 400 \
-  --threads 4 \
-  --af-cc	#for output format case/control
-  --out ukb_step2_BT_chr22
-
---minINFO 0.3
-
---pred ukb_step1_BT_lung_never_pred.list
-#SO MANY DIFFERENT SETTINGS WHICH I DONT KNOW WHAT VALUE TO GIVE -- EXAMPLE: MAC, threshold, minINFO
-#WHAT MEMORY SETTING TO USE IN EACH COMMAND? 
-##To remove all samples that have missing values at any of the P
- ##phenotypes, use option --strict
-
-#one line version
-```
-
-```{r}
-#Step 2 shoudl be with mem2_ssd2_v2_x4
+mkdir -p tmpdir && regenie --step 1 --bed qc_pass --extract qc_pass_ld09_full.prune.in --remove fid_to_remove_lung.txt --phenoFile lung_neversmoke.txt --phenoColList nodules_pros,lc --covarFile covariates.txt --covarColList PC1,PC2,PC3,PC4,PC5,PC6,PC7,PC8,PC9,PC10 --bt --bsize 1000 --lowmem --lowmem-prefix tmpdir/regenie_tmp_preds --out ukb_step1_BT_lung_never --loocv
 ```
 
