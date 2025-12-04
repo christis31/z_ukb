@@ -1,0 +1,114 @@
+---
+title: "post-gwas"
+author: "Christis Nicolaides"
+date: "2025-12-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+
+bc <- read.table("./data/raw/bc.sig.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+dcis <- read.table("./data/raw/dcis.sig.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+lcis <- read.table("./data/raw/lcis.sig.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+bbd_pl <- read.table("./data/raw/bbd_pl.sig.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+bbd_npl <- read.table("./data/raw/bbd_npl.sig.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+bbd_bn <- read.table("./data/raw/bbd_bn.sig.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+lc_smoker <- read.table("./data/raw/lc_smoker.sig.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+lc_neversmoke <- read.table("./data/raw/lc_neversmoke.sig.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+nodules_smoker <- read.table("./data/raw/nodules_smoker.sig.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+nodules_neversmoke <- read.table("./data/raw/nodules_neversmoke.sig.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+
+```
+
+
+create a column in this format 
+10:121586676:A:G	
+
+```{r}
+#Download necessary packages
+
+library(tidyverse)
+
+```
+
+```{r}
+# new columns 
+
+library(tidyverse)
+
+datasets <- c(
+  "bc", 
+  "lcis", 
+  "dcis", 
+  "bbd_bn", 
+  "bbd_npl", 
+  "bbd_pl", 
+  "lc_smoker", 
+  "lc_neversmoke",
+  "nodules_smoker",
+  "nodules_neversmoke"
+)
+
+for (d in datasets) {
+  df <- get(d) %>% 
+    mutate(
+      variant_id = str_c(CHROM, GENPOS, ALLELE0, ALLELE1, sep = ":")
+    )
+  
+  assign(d, df)
+}
+
+```
+
+VEP annotated datatsets 
+
+```{r}
+bc_vep <- read_tsv(
+  "./data/raw/bc_annotated.txt",
+  col_names = TRUE,
+  col_types = cols(.default = "c")  # keep everything as character
+)
+
+lcis_vep <- read_tsv(
+  "./data/raw/lcis_annotated.txt",
+  col_names = TRUE,
+  col_types = cols(.default = "c")  # keep everything as character
+)
+
+dcis_vep <- read_tsv(
+  "./data/raw/dcis_annotated.txt",
+  col_names = TRUE,
+  col_types = cols(.default = "c")  # keep everything as character
+)
+
+lc_neevrsmoke_vep <- read_tsv(
+  "./data/raw/bc_annotated.txt",
+  col_names = TRUE,
+  col_types = cols(.default = "c")  # keep everything as character
+)
+
+```
+
