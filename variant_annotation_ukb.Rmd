@@ -89,19 +89,19 @@ VEP annotated datatsets
 bc_vep <- read_tsv(
   "./data/raw/bc_annotated.txt",
   col_names = TRUE,
-  col_types = cols(.default = "c")  # keep everything as character
+  col_types = cols(.default = "c")  
 )
 
 lcis_vep <- read_tsv(
   "./data/raw/lcis_annotated.txt",
   col_names = TRUE,
-  col_types = cols(.default = "c")  # keep everything as character
+  col_types = cols(.default = "c") 
 )
 
 dcis_vep <- read_tsv(
   "./data/raw/dcis_annotated.txt",
   col_names = TRUE,
-  col_types = cols(.default = "c")  # keep everything as character
+  col_types = cols(.default = "c")  
 )
 
 lc_neevrsmoke_vep <- read_tsv(
@@ -109,6 +109,7 @@ lc_neevrsmoke_vep <- read_tsv(
   col_names = TRUE,
   col_types = cols(.default = "c")  # keep everything as character
 )
+
 
 ```
 
