@@ -52,12 +52,22 @@ create a column in this format
 
 library(tidyverse)
 
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install(c(
+  "GenomicRanges",
+  "TxDb.Hsapiens.UCSC.hg38.knownGene",
+  "org.Hs.eg.db"
+))
+
+library(GenomicRanges)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(org.Hs.eg.db)
+
 ```
 
 ```{r}
 # new columns 
-
-library(tidyverse)
 
 datasets <- c(
   "bc", 
@@ -104,11 +114,104 @@ dcis_vep <- read_tsv(
   col_types = cols(.default = "c")  
 )
 
-lc_neevrsmoke_vep <- read_tsv(
+lc_neversmoke_vep <- read_tsv(
   "./data/raw/bc_annotated.txt",
   col_names = TRUE,
-  col_types = cols(.default = "c")  # keep everything as character
+  col_types = cols(.default = "c") 
 )
+
+#delete unessesary columns to save memory
+
+bc_vep <- bc_vep %>%
+  dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
+
+lcis_vep <- lcis_vep %>%
+  dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
+
+dcis_vep <- dcis_vep %>%
+  dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
+
+lc_neversmoke_vep <- lc_neversmoke_vep %>%
+  dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
+
+#create a k
+```
+
+```{r}
+#make sure whether all variants in bc are in bc_vep
+
+missing_variants <- setdiff(bc$variant_id, bc_vep$`#Uploaded_variation`) #empty
+
+#all represented 
+
+#create a new column on bc which cas the gene symbol based on the data of bc_vep
+
+bc <- bc %>%
+  left_join(
+    bc_vep %>%
+      dplyr::select(`#Uploaded_variation`, SYMBOL, Existing_variation),
+    by = c("variant_id" = "#Uploaded_variation")
+  ) %>%
+  unique()
+
+lcis <- lcis %>%
+  left_join(
+    lcis_vep %>%
+      dplyr::select(`#Uploaded_variation`, SYMBOL, Existing_variation),
+    by = c("variant_id" = "#Uploaded_variation")
+  ) %>%
+  unique()
+
+dcis <- dcis %>%
+  left_join(
+    dcis_vep %>%
+      dplyr::select(`#Uploaded_variation`, SYMBOL, Existing_variation),
+    by = c("variant_id" = "#Uploaded_variation")
+  )%>%
+  unique()
+
+
+lc_neversmoke <- lc_neversmoke %>%
+  left_join(
+    lc_neversmoke_vep %>%
+      dplyr::select(`#Uploaded_variation`, SYMBOL, Existing_variation),
+    by = c("variant_id" = "#Uploaded_variation")
+  )%>%
+  unique()
+
+```
+
+```{r}
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+
+variants_gr <- GRanges(
+  seqnames = Rle(paste0("chr", bc$CHROM)),
+  ranges = IRanges(start = as.numeric(bc$GENPOS), end = as.numeric(bc$GENPOS)),
+  strand = Rle("*"),
+  variant_id = bc$variant_id
+)
+
+genes_gr <- genes(txdb)
+exons_gr <- exons(txdb)
+promoters_gr <- promoters(txdb, upstream = 2000, downstream = 200)
+
+hits_genes <- findOverlaps(variants_gr, genes_gr)
+
+bc$gene_id <- NA_character_
+bc$gene_id[queryHits(hits_genes)] <-
+  mcols(genes_gr)$gene_id[subjectHits(hits_genes)]
+
+hits_exons <- findOverlaps(variants_gr, exons_gr)
+
+bc$in_exon <- FALSE
+bc$in_exon[queryHits(hits_exons)] <- TRUE
+
+hits_prom <- findOverlaps(variants_gr, promoters_gr)
+
+bc$in_promoter <- FALSE
+bc$in_promoter[queryHits(hits_prom)] <- TRUE
+
+
 
 
 ```
