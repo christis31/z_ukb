@@ -1,0 +1,120 @@
+---
+title: "Changing p-value Thresholds"
+author: "Christis Nicolaides"
+date: "2025-12-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+Download data and packages
+
+```{r}
+
+library(tidyverse)
+
+if("librarian" %in% installed.packages()==FALSE) install.packages("librarian")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install(c(
+  "GenomicRanges",
+  "TxDb.Hsapiens.UCSC.hg38.knownGene",
+  "org.Hs.eg.db"
+))
+
+librarian::shelf(dplyr, ggplot2, tidyr, readr, purrr, GenomicRanges, TxDb.Hsapiens.UCSC.hg38.knownGene, org.Hs.eg.db, RCytoGPS, snpsettest)
+
+
+dcis_6 <- read.table("./data/raw/dcis.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+lcis_5 <- read.table("./data/raw/lcis.sig5.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+bbd_pl_6 <- read.table("./data/raw/bbd_pl.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+bbd_npl_6 <- read.table("./data/raw/bbd_npl.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+bbd_bn_ <- read.table("./data/raw/bbd_bn.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+lc_smoker_6 <- read.table("./data/raw/lc_smoker.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+nodules_smoker_6 <- read.table("./data/raw/nodules_smoker.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+nodules_neversmoke_6 <- read.table("./data/raw/nodules_neversmoke.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+
+#remove test_fail rows !!!!
+
+
+lcis_vep_5 <- read_tsv(
+  "./data/raw/lcis_vep_5.txt",
+  col_names = TRUE,
+  col_types = cols(.default = "c")  
+)
+
+dcis_vep_6 <- read_tsv(
+  "./data/raw/dcis_vep_6.txt",
+  col_names = TRUE,
+  col_types = cols(.default = "c")  
+)
+
+nodules_smoker_vep_6 <- read_tsv(
+  "./data/raw/nodules_smoker_vep_6.txt",
+  col_names = TRUE,
+  col_types = cols(.default = "c")
+)
+
+#add the rest of the veo results!!!
+
+lcis_vep_5 <- lcis_vep_5 %>%
+  dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
+
+dcis_vep_6 <- dcis_vep_6 %>%
+  dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
+
+bbd_bn_vep_6 <- bbd_bn_vep_6 %>%
+  dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
+
+bbd_npl_vep_6 <- bbd_npl_vep_6 %>%
+  dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
+
+bbd_pl_vep_6 <- bbd_pl_vep_6 %>%
+  dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
+
+
+lc_smoker_vep_6 <- lc_smoker_vep_6 %>%
+  dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
+
+nodules_neversmoke_vep_6 <- nodules_neversmoke_vep_6 %>%
+  dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
+
+nodules_smoker_vep_6 <- lc_smoker_vep_6 %>%
+  dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
+```
+
+
+create a gene list with the new annotated genes
+```{r}
+
+```
+
+
+should I do Dr Barne's way? If yes, combine the two rows into the gene list
+```{r}
+
+```
+
