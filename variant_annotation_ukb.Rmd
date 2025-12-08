@@ -266,6 +266,14 @@ lc_smoker <- lc_smoker %>%
   ) %>%
   unique()
 
+lc_neversmoke <- lc_neversmoke %>%
+  left_join(
+    lc_neversmoke_vep %>%
+      dplyr::select(`#Uploaded_variation`, SYMBOL, Existing_variation),
+    by = c("variant_id" = "#Uploaded_variation")
+  ) %>%
+  unique()
+
 nodules_neversmoke <- nodules_neversmoke %>%
   left_join(
     nodules_neversmoke_vep %>%
