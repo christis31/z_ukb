@@ -523,24 +523,3 @@ gene_list <- list(
 
 
 
-Change -logpvalue threshold
-```{r}
-lcis_vep_5 <- read_tsv(
-  "./data/raw/lcis_vep_5.txt",
-  col_names = TRUE,
-  col_types = cols(.default = "c")  
-)
-
-dcis_vep_6 <- read_tsv(
-  "./data/raw/dcis_vep_6.txt",
-  col_names = TRUE,
-  col_types = cols(.default = "c")  
-)
-
-nodules_smoker_vep_6 <- read_tsv(
-  "./data/raw/nodules_smoker_vep_6.txt",
-  col_names = TRUE,
-  col_types = cols(.default = "c")
-)
-```
-
