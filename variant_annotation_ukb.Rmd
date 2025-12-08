@@ -376,42 +376,153 @@ plots
 
 
 ```{r}
-txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+#Rcyto and gene mapping
+prep_for_mapping <- function(df) {
+  df %>%
+    mutate(
+      # make a unique SNP ID per row
+      snp = paste0(variant_id, "_", dplyr::row_number()),
+      chr = as.character(CHROM),
+      chr = dplyr::case_when(
+        chr %in% c("X", "23") ~ "23",
+        chr %in% c("Y", "24") ~ "24",
+        TRUE ~ chr
+      ),
+      chr = as.numeric(chr),
+      pos = GENPOS
+    )
+}
 
-variants_gr <- GRanges(
-  seqnames = Rle(paste0("chr", bc$CHROM)),
-  ranges = IRanges(start = as.numeric(bc$GENPOS), end = as.numeric(bc$GENPOS)),
-  strand = Rle("*"),
-  variant_id = bc$variant_id
+
+datasets <- list(
+  bc_clean                 = bc_clean,
+  lcis_clean               = lcis_clean,
+  dcis_clean               = dcis_clean,
+  bbd_bn_clean             = bbd_bn_clean,
+  bbd_pl_clean             = bbd_pl_clean,
+  bbd_npl_clean            = bbd_npl_clean,
+  lc_neversmoke_clean      = lc_neversmoke_clean,
+  lc_smoker_clean          = lc_smoker_clean,
+  nodules_neversmoke_clean = nodules_neversmoke_clean,
+  nodules_smoker_clean     = nodules_smoker_clean
 )
 
-genes_gr <- genes(txdb)
-exons_gr <- exons(txdb)
-promoters_gr <- promoters(txdb, upstream = 2000, downstream = 200)
 
-hits_genes <- findOverlaps(variants_gr, genes_gr)
+###template from Dr Daniel Barnes####
+map.cyto.gene <- function(d,build=38,sta=20000,end=20000,...) {
+  require(RCytoGPS) # for mapping variant to cytoband using data(cytobandLocations)
+  require(snpsettest) # for mapping variant to gene with "map_snp_to_gene" command
+  
+  if(!("snp"%in%colnames(d))) { stop("Column for SNP name (snp) not present") }
+  if(!("chr"%in%colnames(d))) { stop("Column for chromosome (chr) not present") }
+  if(!("pos"%in%colnames(d))) { stop("Column for position (pos) not present") }
+  if(!(build)%in%c(37,38)) { stop("Human genome build must take values 37 (GRCh37) or 38 (GRCh38)") }
+  if(sta<0) { stop("Distance before the gene must be a non-negative integer") }
+  if(end<0) { stop("Distance after the gene must be a non-negative integer") }
+  
+  #############
+  # Gene data #
+  #############
+  x <- d[,c("snp","chr","pos")]
+  colnames(x)[1] <- "id"
+  sta <- sta/1000
+  end <- end/1000
+  if(build==37) {
+    g <- gene.curated.GRCh37
+  }
+  if(build==38) {
+    g <- gene.curated.GRCh38
+  }
+  x <- map_snp_to_gene(info_snp=x,g,extend_start=sta,extend_end=end,only_sets=FALSE)
+  g <- g[which(g$gene.id%in%x$map$gene.id),]
+  d$gene <- ""
+  for(i in 1:nrow(d)) {
+    snp <- d$snp[i]
+    map <- x$map[which(x$map==snp),]
+    if(is.na(mean(map$gene.start))) {
+      # do nothing
+    } else {
+      gene.ids <- unique(map$gene.id)
+      genes <- g[which(g$gene.id%in%gene.ids),]$gene.name # match gene.ids to "g"
+      d[i,]$gene <- paste(genes,collapse=", ")
+      rm(gene.ids,genes)
+    }
+    rm(snp,map)
+  }; rm(i)
+  
+  # Cytoband data: cytoband locations were unchanged from b37 to b38
+  map <- cytobandLocations
+  map$chr <- gsub("chr","",map$Chromosome,fixed=TRUE)
+  map[which(map$chr=="X"),]$chr <- "23"
+  map[which(map$chr=="Y"),]$chr <- "24"
+  
+  map$chr <- as.numeric(map$chr)
+  d$cytoband <- ""
+  for(i in 1:nrow(d)) {
+    chr <- d$chr[i]
+    pos <- d$pos[i]
+    cyt <- row.names(map[which(map$chr==chr & (map$loc.start<=pos & map$loc.end>=pos)),])
+    d[i,]$cytoband <- cyt
+    rm(chr,pos,cyt)
+  }; rm(i)
+  
+  return(d)
+}
 
-bc$gene_id <- NA_character_
-bc$gene_id[queryHits(hits_genes)] <-
-  mcols(genes_gr)$gene_id[subjectHits(hits_genes)]
+data("cytobandLocations", package = "RCytoGPS")
+data("gene.curated.GRCh38", package = "snpsettest") 
 
-hits_exons <- findOverlaps(variants_gr, exons_gr)
+mapped <- lapply(datasets, function(df) {
+  df_prepped <- prep_for_mapping(df)
+  map.cyto.gene(df_prepped, build = 38, sta = 20000, end = 20000)
+})
 
-bc$in_exon <- FALSE
-bc$in_exon[queryHits(hits_exons)] <- TRUE
-
-hits_prom <- findOverlaps(variants_gr, promoters_gr)
-
-bc$in_promoter <- FALSE
-bc$in_promoter[queryHits(hits_prom)] <- TRUE
+bc_clean                 <- mapped$bc_clean
+lcis_clean               <- mapped$lcis_clean
+dcis_clean               <- mapped$dcis_clean
+bbd_bn_clean             <- mapped$bbd_bn_clean
+bbd_pl_clean             <- mapped$bbd_pl_clean
+bbd_npl_clean            <- mapped$bbd_npl_clean
+lc_neversmoke_clean      <- mapped$lc_neversmoke_clean
+lc_smoker_clean          <- mapped$lc_smoker_clean
+nodules_neversmoke_clean <- mapped$nodules_neversmoke_clean
+nodules_smoker_clean     <- mapped$nodules_smoker_clean
 
 ```
+
 
 ```{r}
-#Rcyto and gene mapping
+#modify the gene list to include all unique genes from the SYMBOL column but now also from the gene column
+bc_genes <- unique(na.omit(c(bc_clean$SYMBOL, bc_clean$gene)))
+lcis_genes <- unique(na.omit(c(lcis_clean$SYMBOL, lcis_clean$gene)))
+dcis_genes <- unique(na.omit(c(dcis_clean$SYMBOL, dcis_clean$gene)))
+bbd_bn_genes <- unique(na.omit(c(bbd_bn_clean$SYMBOL, bbd_bn_clean$gene)))
+bbd_pl_genes <- unique(na.omit(c(bbd_pl_clean$SYMBOL, bbd_pl_clean$gene)))
+bbd_npl_genes <- unique(na.omit(c(bbd_npl_clean$SYMBOL, bbd_npl_clean$gene)))
+lc_smoker_genes <- unique(na.omit(c(lc_smoker_clean$SYMBOL, lc_smoker_clean$gene)))
+lc_neversmoke_genes <- unique(na.omit(c(lc_neversmoke_clean$SYMBOL, lc_neversmoke_clean$gene)))
+nodules_smoker_genes <- unique(na.omit(c(nodules_smoker_clean$SYMBOL, nodules_smoker_clean$gene)))
+nodules_neversmoke_genes <- unique(na.omit(c(nodules_neversmoke_clean$SYMBOL, nodules_neversmoke_clean$gene)))
+#make a table with the column being the phenotype and the rows being the genes
 
+gene_list <- list(
+  bc = bc_genes,
+  lcis = lcis_genes,
+  dcis = dcis_genes,
+  bbd_bn = bbd_bn_genes,
+  bbd_pl = bbd_pl_genes,
+  bbd_npl = bbd_npl_genes,
+  lc_smoker = lc_smoker_genes,
+  lc_neversmoke = lc_neversmoke_genes,
+  nodules_smoker = nodules_smoker_genes,
+  nodules_neversmoke = nodules_neversmoke_genes
+)
 
 ```
+
+
+
+
 Change -logpvalue threshold
 ```{r}
 lcis_vep_5 <- read_tsv(
