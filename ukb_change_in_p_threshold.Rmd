@@ -59,6 +59,25 @@ nodules_neversmoke_6 <- read.table("./data/raw/nodules_neversmoke.sig6.txt", hea
 
 #remove test_fail rows !!!!
 
+library(dplyr)
+
+datasets <- c(
+  "dcis_6",
+  "lcis_5",
+  "bbd_pl_6",
+  "bbd_npl_6",
+  "bbd_bn_",
+  "lc_smoker_6",
+  "nodules_smoker_6",
+  "nodules_neversmoke_6"
+)
+
+for (name in datasets) {
+  df <- get(name)
+  df <- df %>% filter(EXTRA != "TEST_FAIL" | is.na(EXTRA))
+  assign(name, df)
+}
+
 
 lcis_vep_5 <- read_tsv(
   "./data/raw/lcis_vep_5.txt",
@@ -72,8 +91,38 @@ dcis_vep_6 <- read_tsv(
   col_types = cols(.default = "c")  
 )
 
+bbd_bn_vep_6 <- read_tsv(
+  "./data/raw/bbd_bn_vep_6.txt",
+  col_names = TRUE,
+  col_types = cols(.default = "c")
+)
+
+bbd_npl_vep_6 <- read_tsv(
+  "./data/raw/bbd_npl_vep_6.txt",
+  col_names = TRUE,
+  col_types = cols(.default = "c")
+)
+
+bbd_pl_vep_6 <- read_tsv(
+  "./data/raw/bbd_pl_vep_6.txt",
+  col_names = TRUE,
+  col_types = cols(.default = "c")
+)
+
+lc_smoker_vep_6 <- read_tsv(
+  "./data/raw/lc_smoker_vep_6.txt",
+  col_names = TRUE,
+  col_types = cols(.default = "c")
+)
+
 nodules_smoker_vep_6 <- read_tsv(
   "./data/raw/nodules_smoker_vep_6.txt",
+  col_names = TRUE,
+  col_types = cols(.default = "c")
+)
+
+nodules_neversmoke_vep_6 <- read_tsv(
+  "./data/raw/nodules_neversmoke_vep_6.txt",
   col_names = TRUE,
   col_types = cols(.default = "c")
 )
@@ -94,7 +143,6 @@ bbd_npl_vep_6 <- bbd_npl_vep_6 %>%
 
 bbd_pl_vep_6 <- bbd_pl_vep_6 %>%
   dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
-
 
 lc_smoker_vep_6 <- lc_smoker_vep_6 %>%
   dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
