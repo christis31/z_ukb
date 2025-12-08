@@ -45,14 +45,14 @@ BiocManager::install(c(
   "org.Hs.eg.db"
 ))
 
-librarian::shelf(dplyr, ggplot2, tidyr, readr, purrr, GenomicRanges, TxDb.Hsapiens.UCSC.hg38.knownGene, org.Hs.eg.db, RCytoGPS, snpsettest)
+librarian::shelf(dplyr, ggplot2, tidyr, readr, purrr, GenomicRanges, TxDb.Hsapiens.UCSC.hg38.knownGene, org.Hs.eg.db, RCytoGPS, snpsettest, stringr)
 
 
 dcis_6 <- read.table("./data/raw/dcis.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
 lcis_5 <- read.table("./data/raw/lcis.sig5.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
 bbd_pl_6 <- read.table("./data/raw/bbd_pl.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
 bbd_npl_6 <- read.table("./data/raw/bbd_npl.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
-bbd_bn_ <- read.table("./data/raw/bbd_bn.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
+bbd_bn_6 <- read.table("./data/raw/bbd_bn.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
 lc_smoker_6 <- read.table("./data/raw/lc_smoker.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
 nodules_smoker_6 <- read.table("./data/raw/nodules_smoker.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
 nodules_neversmoke_6 <- read.table("./data/raw/nodules_neversmoke.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
@@ -66,7 +66,7 @@ datasets <- c(
   "lcis_5",
   "bbd_pl_6",
   "bbd_npl_6",
-  "bbd_bn_",
+  "bbd_bn_6",
   "lc_smoker_6",
   "nodules_smoker_6",
   "nodules_neversmoke_6"
@@ -76,6 +76,15 @@ for (name in datasets) {
   df <- get(name)
   df <- df %>% filter(EXTRA != "TEST_FAIL" | is.na(EXTRA))
   assign(name, df)
+}
+
+for (d in datasets) {
+  df2 <- get(d) %>% 
+    mutate(
+      variant_id = str_c(CHROM, GENPOS, ALLELE0, ALLELE1, sep = ":")
+    )
+  
+  assign(d, df2)
 }
 
 
@@ -150,14 +159,98 @@ lc_smoker_vep_6 <- lc_smoker_vep_6 %>%
 nodules_neversmoke_vep_6 <- nodules_neversmoke_vep_6 %>%
   dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
 
-nodules_smoker_vep_6 <- lc_smoker_vep_6 %>%
+nodules_smoker_vep_6 <- nodules_smoker_vep_6 %>%
   dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
 ```
 
 
-create a gene list with the new annotated genes
+create a gene list with the new annotated genes -ORESKI
 ```{r}
+lcis_5 <- lcis_5 %>%
+  left_join(
+    lcis_vep_5 %>%
+      dplyr::select(`#Uploaded_variation`, SYMBOL, Existing_variation),
+    by = c("variant_id" = "#Uploaded_variation")
+  ) %>%
+  unique()
 
+dcis_6 <- dcis_6 %>%
+  left_join(
+    dcis_vep_6 %>%
+      dplyr::select(`#Uploaded_variation`, SYMBOL, Existing_variation),
+    by = c("variant_id" = "#Uploaded_variation")
+  )%>%
+  unique()
+
+bbd_bn_6 <- bbd_bn_6 %>%
+  left_join(
+    bbd_bn_vep_6 %>%
+      dplyr::select(`#Uploaded_variation`, SYMBOL, Existing_variation),
+    by = c("variant_id" = "#Uploaded_variation")
+  ) %>%
+  unique()
+
+bbd_pl_6 <- bbd_pl_6 %>%
+  left_join(
+    bbd_pl_vep_6 %>%
+      dplyr::select(`#Uploaded_variation`, SYMBOL, Existing_variation),
+    by = c("variant_id" = "#Uploaded_variation")
+  ) %>%
+  unique()
+
+bbd_npl_6 <- bbd_npl_6 %>%
+  left_join(
+    bbd_npl_vep_6 %>%
+      dplyr::select(`#Uploaded_variation`, SYMBOL, Existing_variation),
+    by = c("variant_id" = "#Uploaded_variation")
+  ) %>%
+  unique()
+
+lc_smoker_6 <- lc_smoker_6 %>%
+  left_join(
+    lc_smoker_vep_6 %>%
+      dplyr::select(`#Uploaded_variation`, SYMBOL, Existing_variation),
+    by = c("variant_id" = "#Uploaded_variation")
+  ) %>%
+  unique()
+
+nodules_neversmoke_6 <- nodules_neversmoke_6 %>%
+  left_join(
+    nodules_neversmoke_vep_6 %>%
+      dplyr::select(`#Uploaded_variation`, SYMBOL, Existing_variation),
+    by = c("variant_id" = "#Uploaded_variation")
+  ) %>%
+  unique()
+
+nodules_smoker_6 <- nodules_smoker_6 %>%
+  left_join(
+    nodules_smoker_vep_6 %>%
+      dplyr::select(`#Uploaded_variation`, SYMBOL, Existing_variation),
+    by = c("variant_id" = "#Uploaded_variation")
+  ) %>%
+  unique()
+
+
+lcis_genes <- unique(na.omit(lcis_5$SYMBOL))
+dcis_genes <- unique(na.omit(dcis_6$SYMBOL))
+bbd_bn_genes <- unique(na.omit(bbd_bn_6$SYMBOL))
+bbd_pl_genes <- unique(na.omit(bbd_pl_6$SYMBOL))
+bbd_npl_genes <- unique(na.omit(bbd_npl_6$SYMBOL))
+lc_smoker_genes <- unique(na.omit(lc_smoker_6$SYMBOL))
+nodules_smoker_genes <- unique(na.omit(nodules_smoker_6$SYMBOL))
+nodules_neversmoke_genes <- unique(na.omit(nodules_neversmoke_6$SYMBOL))
+
+#make a table with the column being the phenotype and the rows being the genes
+gene_list <- list(
+  lcis_5 = lcis_genes,
+  dcis_6 = dcis_genes,
+  bbd_bn_6 = bbd_bn_genes,
+  bbd_pl_6 = bbd_pl_genes,
+  bbd_npl_6 = bbd_npl_genes,
+  lc_smoker_6 = lc_smoker_genes,
+  nodules_smoker_6 = nodules_smoker_genes,
+  nodules_neversmoke_6 = nodules_neversmoke_genes
+)
 ```
 
 
