@@ -185,7 +185,7 @@ lc_smoker_vep <- lc_smoker_vep %>%
 nodules_neversmoke_vep <- nodules_neversmoke_vep %>%
   dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
 
-nodules_smoker_vep <- lc_smoker_vep %>%
+nodules_smoker_vep <- nodules_smoker_vep %>%
   dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
 
 
@@ -220,15 +220,6 @@ lcis <- lcis %>%
 dcis <- dcis %>%
   left_join(
     dcis_vep %>%
-      dplyr::select(`#Uploaded_variation`, SYMBOL, Existing_variation),
-    by = c("variant_id" = "#Uploaded_variation")
-  )%>%
-  unique()
-
-
-lc_neversmoke <- lc_neversmoke %>%
-  left_join(
-    lc_neversmoke_vep %>%
       dplyr::select(`#Uploaded_variation`, SYMBOL, Existing_variation),
     by = c("variant_id" = "#Uploaded_variation")
   )%>%
