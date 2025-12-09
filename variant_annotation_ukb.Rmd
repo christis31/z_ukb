@@ -61,7 +61,7 @@ BiocManager::install(c(
   "org.Hs.eg.db"
 ))
 
-librarian::shelf(dplyr, ggplot2, tidyr, readr, purrr, GenomicRanges, TxDb.Hsapiens.UCSC.hg38.knownGene, org.Hs.eg.db, RCytoGPS, snpsettest)
+librarian::shelf(dplyr, ggplot2, tidyr, readr, purrr, RCytoGPS, snpsettest)
 
 
 ```
