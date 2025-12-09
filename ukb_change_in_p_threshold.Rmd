@@ -367,7 +367,7 @@ nodules_smoker_6     <- mapped$nodules_smoker_6
 ```
 
 ```{r}
-#combiune the two ways of mapping into a final gene list
+#combine the two ways of mapping into a final gene list
 
 final_gene_list <- list(
   lcis_5 = unique(na.omit(c(lcis_genes, lcis_6$gene))),
