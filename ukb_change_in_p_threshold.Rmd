@@ -45,7 +45,7 @@ BiocManager::install(c(
   "org.Hs.eg.db"
 ))
 
-librarian::shelf(dplyr, ggplot2, tidyr, readr, purrr, GenomicRanges, TxDb.Hsapiens.UCSC.hg38.knownGene, org.Hs.eg.db, RCytoGPS, snpsettest, stringr)
+librarian::shelf(dplyr, ggplot2, tidyr, readr, purrr, RCytoGPS, snpsettest, stringr)
 
 
 dcis_6 <- read.table("./data/raw/dcis.sig6.txt", header = TRUE, sep = "", fill = TRUE, stringsAsFactors = FALSE)
@@ -61,7 +61,7 @@ nodules_neversmoke_6 <- read.table("./data/raw/nodules_neversmoke.sig6.txt", hea
 
 library(dplyr)
 
-datasets <- c(
+data <- c(
   "dcis_6",
   "lcis_5",
   "bbd_pl_6",
@@ -72,13 +72,13 @@ datasets <- c(
   "nodules_neversmoke_6"
 )
 
-for (name in datasets) {
+for (name in data) {
   df <- get(name)
   df <- df %>% filter(EXTRA != "TEST_FAIL" | is.na(EXTRA))
   assign(name, df)
 }
 
-for (d in datasets) {
+for (d in data) {
   df2 <- get(d) %>% 
     mutate(
       variant_id = str_c(CHROM, GENPOS, ALLELE0, ALLELE1, sep = ":")
@@ -256,6 +256,128 @@ gene_list <- list(
 
 should I do Dr Barne's way? If yes, combine the two rows into the gene list
 ```{r}
+#Rcyto and gene mapping
+prep_for_mapping <- function(df) {
+  df %>%
+    mutate(
+      # make a unique SNP ID per row
+      snp = paste0(variant_id, "_", dplyr::row_number()),
+      chr = as.character(CHROM),
+      chr = dplyr::case_when(
+        chr %in% c("X", "23") ~ "23",
+        chr %in% c("Y", "24") ~ "24",
+        TRUE ~ chr
+      ),
+      chr = as.numeric(chr),
+      pos = GENPOS
+    )
+}
 
+
+datasets <- list(
+  lcis_5               = lcis_5,
+  dcis_6               = dcis_6,
+  bbd_bn_6             = bbd_bn_6,
+  bbd_pl_6             = bbd_pl_6,
+  bbd_npl_6            = bbd_npl_6,
+  lc_smoker_6          = lc_smoker_6,
+  nodules_neversmoke_6 = nodules_neversmoke_6,
+  nodules_smoker_6     = nodules_smoker_6
+)
+
+
+###template from Dr Daniel Barnes####
+map.cyto.gene <- function(d,build=38,sta=20000,end=20000,...) {
+  require(RCytoGPS) # for mapping variant to cytoband using data(cytobandLocations)
+  require(snpsettest) # for mapping variant to gene with "map_snp_to_gene" command
+  
+  if(!("snp"%in%colnames(d))) { stop("Column for SNP name (snp) not present") }
+  if(!("chr"%in%colnames(d))) { stop("Column for chromosome (chr) not present") }
+  if(!("pos"%in%colnames(d))) { stop("Column for position (pos) not present") }
+  if(!(build)%in%c(37,38)) { stop("Human genome build must take values 37 (GRCh37) or 38 (GRCh38)") }
+  if(sta<0) { stop("Distance before the gene must be a non-negative integer") }
+  if(end<0) { stop("Distance after the gene must be a non-negative integer") }
+  
+  #############
+  # Gene data #
+  #############
+  x <- d[,c("snp","chr","pos")]
+  colnames(x)[1] <- "id"
+  sta <- sta/1000
+  end <- end/1000
+  if(build==37) {
+    g <- gene.curated.GRCh37
+  }
+  if(build==38) {
+    g <- gene.curated.GRCh38
+  }
+  x <- map_snp_to_gene(info_snp=x,g,extend_start=sta,extend_end=end,only_sets=FALSE)
+  g <- g[which(g$gene.id%in%x$map$gene.id),]
+  d$gene <- ""
+  for(i in 1:nrow(d)) {
+    snp <- d$snp[i]
+    map <- x$map[which(x$map==snp),]
+    if(is.na(mean(map$gene.start))) {
+      # do nothing
+    } else {
+      gene.ids <- unique(map$gene.id)
+      genes <- g[which(g$gene.id%in%gene.ids),]$gene.name # match gene.ids to "g"
+      d[i,]$gene <- paste(genes,collapse=", ")
+      rm(gene.ids,genes)
+    }
+    rm(snp,map)
+  }; rm(i)
+  
+  # Cytoband data: cytoband locations were unchanged from b37 to b38
+  map <- cytobandLocations
+  map$chr <- gsub("chr","",map$Chromosome,fixed=TRUE)
+  map[which(map$chr=="X"),]$chr <- "23"
+  map[which(map$chr=="Y"),]$chr <- "24"
+  
+  map$chr <- as.numeric(map$chr)
+  d$cytoband <- ""
+  for(i in 1:nrow(d)) {
+    chr <- d$chr[i]
+    pos <- d$pos[i]
+    cyt <- row.names(map[which(map$chr==chr & (map$loc.start<=pos & map$loc.end>=pos)),])
+    d[i,]$cytoband <- cyt
+    rm(chr,pos,cyt)
+  }; rm(i)
+  
+  return(d)
+}
+
+data("cytobandLocations", package = "RCytoGPS")
+data("gene.curated.GRCh38", package = "snpsettest") 
+
+mapped <- lapply(datasets, function(df) {
+  df_prepped <- prep_for_mapping(df)
+  map.cyto.gene(df_prepped, build = 38, sta = 20000, end = 20000)
+})
+
+lcis_6               <- mapped$lcis_6
+dcis_6               <- mapped$dcis_6
+bbd_bn_6             <- mapped$bbd_bn_6
+bbd_pl_6             <- mapped$bbd_pl_6
+bbd_npl_6            <- mapped$bbd_npl_6
+lc_smoker_6          <- mapped$lc_smoker_6
+nodules_neversmoke_6 <- mapped$nodules_neversmoke_6
+nodules_smoker_6     <- mapped$nodules_smoker_6
+
+```
+
+```{r}
+#combiune the two ways of mapping into a final gene list
+
+final_gene_list <- list(
+  lcis_5 = unique(na.omit(c(lcis_genes, lcis_6$gene))),
+  dcis_6 = unique(na.omit(c(dcis_genes, dcis_6$gene))),
+  bbd_bn_6 = unique(na.omit(c(bbd_bn_genes, bbd_bn_6$gene))),
+  bbd_pl_6 = unique(na.omit(c(bbd_pl_genes, bbd_pl_6$gene))),
+  bbd_npl_6 = unique(na.omit(c(bbd_npl_genes, bbd_npl_6$gene))),
+  lc_smoker_6 = unique(na.omit(c(lc_smoker_genes, lc_smoker_6$gene))),
+  nodules_smoker_6 = unique(na.omit(c(nodules_smoker_genes, nodules_smoker_6$gene))),
+  nodules_neversmoke_6 = unique(na.omit(c(nodules_neversmoke_genes, nodules_neversmoke_6$gene)))
+)
 ```
 
