@@ -535,10 +535,15 @@ final_gene_df <- as.data.frame(
   })
 )
 
-write.csv(final_gene_df, file = "./data/processed/final_genes_annotated_mapped_ukb.csv", row.names = FALSE)
 ```
 
 This method revealed 4 extra gene annotations for bc, 1 for dcis, 3 for bbd_bn, 2 for lc_smoker, 
 2 for lc_neversmoke, 2 for nodules_neversmoke, and 1 for nodules_smoker
 
+
+
+dont press since I manually changed some of the dataset
+```{r}
+write.csv(final_gene_df, file = "./data/processed/final_genes_annotated_mapped_ukb.csv", row.names = FALSE)
+```
 
