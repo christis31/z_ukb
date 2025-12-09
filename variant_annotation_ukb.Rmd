@@ -44,9 +44,6 @@ nodules_neversmoke <- read.table("./data/raw/nodules_neversmoke.sig.txt", header
 ```
 
 
-create a column in this format 
-10:121586676:A:G	
-
 ```{r}
 #Download necessary packages
 
@@ -66,6 +63,7 @@ librarian::shelf(dplyr, ggplot2, tidyr, readr, purrr, RCytoGPS, snpsettest)
 
 ```
 
+variant_id format
 ```{r}
 # new columns 
 
@@ -94,7 +92,6 @@ for (d in datasets) {
 ```
 
 VEP annotated datatsets 
-
 ```{r}
 bc_vep <- read_tsv(
   "./data/raw/bc_annotated.txt",
@@ -188,8 +185,6 @@ nodules_neversmoke_vep <- nodules_neversmoke_vep %>%
 nodules_smoker_vep <- nodules_smoker_vep %>%
   dplyr::select('#Uploaded_variation', Location, Allele, Gene, SYMBOL, Existing_variation, REF_ALLELE, UPLOADED_ALLELE, EXON, INTRON)
 
-
-#create a k
 ```
 
 ```{r}
@@ -321,7 +316,20 @@ gene_list <- list(
   nodules_neversmoke = nodules_neversmoke_genes
 )
 
+
+#export into a csv
+max_len <- max(sapply(gene_list, length))
+
+gene_df <- as.data.frame(
+  lapply(gene_list, function(x) {
+    c(x, rep(NA, max_len - length(x)))
+  })
+)
+
+write.csv(gene_df, file = "./data/processed/genes_annotated_ukb.csv", row.names = FALSE)
+
 ```
+
 
 
 ```{r}
@@ -504,7 +512,7 @@ nodules_smoker_genes <- unique(na.omit(c(nodules_smoker_clean$SYMBOL, nodules_sm
 nodules_neversmoke_genes <- unique(na.omit(c(nodules_neversmoke_clean$SYMBOL, nodules_neversmoke_clean$gene)))
 #make a table with the column being the phenotype and the rows being the genes
 
-gene_list <- list(
+final_gene_list <- list(
   bc = bc_genes,
   lcis = lcis_genes,
   dcis = dcis_genes,
@@ -517,6 +525,17 @@ gene_list <- list(
   nodules_neversmoke = nodules_neversmoke_genes
 )
 
+#export into a csv
+
+max_len <- max(sapply(final_gene_list, length))
+
+final_gene_df <- as.data.frame(
+  lapply(final_gene_list, function(x) {
+    c(x, rep(NA, max_len - length(x)))
+  })
+)
+
+write.csv(final_gene_df, file = "./data/processed/final_genes_annotated_mapped_ukb.csv", row.names = FALSE)
 ```
 
 
