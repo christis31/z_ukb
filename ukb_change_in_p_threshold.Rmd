@@ -379,5 +379,15 @@ final_gene_list <- list(
   nodules_smoker_6 = unique(na.omit(c(nodules_smoker_genes, nodules_smoker_6$gene))),
   nodules_neversmoke_6 = unique(na.omit(c(nodules_neversmoke_genes, nodules_neversmoke_6$gene)))
 )
+
+max_len <- max(sapply(final_gene_list, length))
+
+final_gene_df <- as.data.frame(
+  lapply(final_gene_list, function(x) {
+    c(x, rep(NA, max_len - length(x)))
+  })
+)
+
+write.csv(final_gene_df, file = "./data/processed/threshold_6_genes_annotated_mapped_ukb.csv", row.names = FALSE)
 ```
 
