@@ -1,4 +1,1 @@
-#hello
-
-print("Hello, World!")
 
